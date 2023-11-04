@@ -492,6 +492,13 @@ class FileFieldPluginBase(FieldPluginBase):
         help_text=_('The maximum file size of the upload, in bytes. You can '
                     'use common size suffixes (kB, MB, GB, ...).')
     )
+    allowed_extensions = models.CharField(
+        max_length=255,
+        verbose_name=_("Allowed extensions"),
+        blank=True,
+        default="",
+        help_text=_("Comma-separated list of file extensions allowed for this file field."),
+    )
 
     class Meta:
         abstract = True
