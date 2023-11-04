@@ -14,6 +14,10 @@ def generate_file_extension_validator(allowed_extensions_str: str = ""):
     allowed_extensions = serialize_delimiter_separated_values_string(
         allowed_extensions_str, delimiter=",", strip=True, lower=True
     )
+    allowed_extensions = [
+        extension if extension.startswith(".") else f".{extension}"
+        for extension in allowed_extensions
+    ]
 
     if not allowed_extensions:
         return lambda value: None
