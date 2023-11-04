@@ -7,17 +7,14 @@ from django.core.validators import (
 )
 from django.utils.translation import gettext_lazy as _
 
+from aldryn_forms.utils import serialize_delimiter_separated_values_string
+
 
 def generate_file_extension_validator(allowed_extensions_str: str = ""):
-    allowed_extensions = (
-        [
-            extension.strip().lower()
-            for extension in allowed_extensions_str.split(",")
-            if extension.strip()
-        ]
-        if allowed_extensions_str
-        else []
+    allowed_extensions = serialize_delimiter_separated_values_string(
+        allowed_extensions_str, delimiter=",", strip=True, lower=True
     )
+
     if not allowed_extensions:
         return lambda value: None
 
