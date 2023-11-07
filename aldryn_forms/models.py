@@ -505,7 +505,12 @@ class FileFieldPluginBase(FieldPluginBase):
         verbose_name=_("Allowed extensions"),
         blank=True,
         default="",
-        help_text=_("Comma-separated list of file extensions allowed for this file field."),
+        help_text=(
+            _(
+                "Comma-separated list of file extensions allowed for this file field. "
+                "Leave it empty to allow any extension."
+            ),
+        ),
     )
 
     IS_FILE_FIELD = True
