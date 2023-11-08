@@ -242,14 +242,14 @@ class EmailNotification(models.Model):
             return
 
         # noinspection PyProtectedMember
-        fields: typing.List[FileFieldPluginBase] = [
+        fields = [
             field
             for field in form.base_fields.values()
             if hasattr(field, "_model_instance") and field._model_instance.IS_FILE_FIELD
         ]
 
         for field in fields:
-            # noinspection PyUnresolvedReferences
+            # noinspection PyProtectedMember
             field_name = field._model_instance.name
 
             if field_name in files_to_attach:
