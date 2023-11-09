@@ -548,10 +548,10 @@ class EmailField(BaseTextField):
     form_field_widget = forms.EmailInput
     form_field_widget_input_type = 'email'
     fieldset_advanced_fields = [
-                                   'email_send_notification',
-                                   'email_subject',
-                                   'email_body',
-                               ] + Field.fieldset_advanced_fields
+        "email_send_notification",
+        "email_subject",
+        "email_body",
+    ] + Field.fieldset_advanced_fields
     email_template_base = 'aldryn_forms/emails/user/notification'
 
     def send_notification_email(self, email, form, form_field_instance):
@@ -591,8 +591,8 @@ class FileField(Field):
         'validators',
     ]
     fieldset_general_fields = [
-                                  'upload_to',
-                              ] + Field.fieldset_general_fields
+        "upload_to",
+    ] + Field.fieldset_general_fields
     fieldset_advanced_fields = [
         'store_to_filer',
         'help_text',
@@ -677,8 +677,8 @@ class ImageField(FileField):
     form_field = RestrictedImageField
     form_field_widget = RestrictedImageField.widget
     fieldset_general_fields = [
-                                  'upload_to',
-                              ] + Field.fieldset_general_fields
+        "upload_to",
+    ] + Field.fieldset_general_fields
     fieldset_advanced_fields = [
         'store_to_filer',
         'help_text',
