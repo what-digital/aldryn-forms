@@ -614,7 +614,11 @@ class FileField(Field):
 
     def get_form_field_validators(self, instance: models.FileFieldPluginBase):
         validators = super().get_form_field_validators(instance)
-        validators.append(generate_file_extension_validator(instance.allowed_extensions, instance.invalid_extension_message))
+        validators.append(
+            generate_file_extension_validator(
+                instance.allowed_extensions, instance.invalid_extension_message
+            )
+        )
         return validators
 
     def serialize_value(self, instance, value, is_confirmation=False):

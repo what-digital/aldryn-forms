@@ -26,16 +26,14 @@ def generate_file_extension_validator(allowed_extensions_str: str = "", error_me
     def validator(value):
         extension = os.path.splitext(value.name)[1]  # [0] returns path+filename
         if not extension.lower() in allowed_extensions:
-            if error_message:
-                raise ValidationError(
-                    _(error_message),
-                    code="invalid_extension",
-                )
-            else:
-                raise ValidationError(
-                    _(f"File extension '{extension}' is not allowed for this field."),
-                    code="invalid_extension",
-                )
+            raise ValidationError(
+                _(
+                    error_message
+                    if error_message
+                    else f"File extension '{extension}' is not allowed for this field."
+                ),
+                code="invalid_extension",
+            )
 
     return validator
 
