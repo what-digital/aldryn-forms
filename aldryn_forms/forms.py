@@ -9,7 +9,8 @@ from PIL import Image
 
 from .models import FormPlugin, FormSubmission
 from .sizefield.utils import filesizeformat
-from .utils import add_form_error, get_user_model
+from .utils import add_form_error, get_user_model, serialize_delimiter_separated_values_string
+import mimetypes
 
 
 class FileSizeCheckMixin(object):
@@ -33,7 +34,25 @@ class FileSizeCheckMixin(object):
 
 
 class RestrictedFileField(FileSizeCheckMixin, forms.FileField):
-    pass
+    def __init__(self, *args, **kwargs):
+        self.allowed_extensions = kwargs.pop('allowed_extensions', None)
+        super(RestrictedFileField, self).__init__(*args, **kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        if self.allowed_extensions is not None:
+            ext_list = serialize_delimiter_separated_values_string(
+                self.allowed_extensions, delimiter=",", strip=True, lower=True
+            )
+            accept_str = ""
+            for ext in ext_list:
+                try:
+                    accept_str += mimetypes.guess_type(f'dummy{ext}')[0]
+                except:
+                    accept_str += ext
+                accept_str += ", "
+            attrs.setdefault('accept', accept_str)
+        return attrs
 
 
 class RestrictedImageField(FileSizeCheckMixin, forms.ImageField):

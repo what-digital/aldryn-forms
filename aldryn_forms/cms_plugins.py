@@ -610,6 +610,8 @@ class FileField(Field):
                 kwargs['help_text'] = kwargs['help_text'].replace(
                     'MAXSIZE', filesizeformat(instance.max_size))
             kwargs['max_size'] = instance.max_size
+        if instance.allowed_extensions:
+            kwargs['allowed_extensions'] = instance.allowed_extensions
         return kwargs
 
     def get_form_field_validators(self, instance: models.FileFieldPluginBase):
