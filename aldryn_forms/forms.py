@@ -40,18 +40,18 @@ class RestrictedFileField(FileSizeCheckMixin, forms.FileField):
 
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
-        if self.allowed_extensions is not None:
-            ext_list = serialize_delimiter_separated_values_string(
-                self.allowed_extensions, delimiter=",", strip=True, lower=True
-            )
-            accept_str = ""
-            for ext in ext_list:
-                try:
-                    accept_str += mimetypes.guess_type(f'dummy{ext}')[0]
-                except:
-                    accept_str += ext
-                accept_str += ", "
-            attrs.setdefault('accept', accept_str)
+        if self.allowed_extensions:
+            allowed_extensions_list = [
+                extension if extension.startswith(".") else f".{extension}"
+                for extension in serialize_delimiter_separated_values_string(
+                    self.allowed_extensions, delimiter=",", strip=True, lower=True
+                )
+            ]
+            accepted_types = [
+                mimetypes.guess_type(f"dummy{extension}")[0] or extension
+                for extension in allowed_extensions_list
+            ]
+            attrs.setdefault('accept', ",".join(accepted_types))
         return attrs
 
 
