@@ -363,36 +363,36 @@ class FieldsetPlugin(CMSPlugin, CMSPluginOverridenPTR):
 
 
 TRANSLATED_FIELDS_KWARGS = {
-    'name_new': models.CharField(
+    'name': models.CharField(
         _('Name'),
         max_length=255,
         help_text=_('Used to set the field name'),
         blank=True,
     ),
-    'label_new': models.CharField(_('Label'), max_length=255, blank=True),
-    'required_new': models.BooleanField(_('Field is required'), default=False),
-    'required_message_new': models.TextField(
+    'label': models.CharField(_('Label'), max_length=255, blank=True),
+    'required': models.BooleanField(_('Field is required'), default=False),
+    'required_message': models.TextField(
         verbose_name=_('Field required error message'),
         blank=True,
         null=True,
         help_text=_('Error message displayed if the required field is left '
                     'empty. Default: "This field is required".')
     ),
-    'placeholder_text_new': models.CharField(
+    'placeholder_text': models.CharField(
         verbose_name=_('Placeholder text'),
         max_length=255,
         blank=True,
         help_text=_('Default text in a form. Disappears when user starts '
                     'typing. Example: "email@example.com"')
     ),
-    'help_text_new': models.TextField(
+    'help_text': models.TextField(
         verbose_name=_('Help text'),
         blank=True,
         null=True,
         help_text=_('Explanatory text displayed next to input field. Just like '
                     'this one.')
     ),
-    'attributes_new': AttributesField(
+    'attributes': AttributesField(
         verbose_name=_('Attributes'),
         blank=True,
         excluded_keys=['name']
@@ -400,85 +400,27 @@ TRANSLATED_FIELDS_KWARGS = {
 
     # for text field those are min and max length
     # for multiple select those are min and max number of choices
-    'min_value_new': models.PositiveIntegerField(
+    'min_value': models.PositiveIntegerField(
         _('Min value'),
         blank=True,
         null=True,
     ),
-    'max_value_new': models.PositiveIntegerField(
+    'max_value': models.PositiveIntegerField(
         _('Max value'),
         blank=True,
         null=True,
     ),
-    'initial_value_new': models.CharField(
+    'initial_value': models.CharField(
         verbose_name=_('Initial value'),
         max_length=255,
         blank=True,
         help_text=_('Default value of field.')
     ),
-    'custom_classes_new': models.CharField(verbose_name=_('custom css classes'), max_length=255, blank=True),
+    'custom_classes': models.CharField(verbose_name=_('custom css classes'), max_length=255, blank=True),
 }
 
 
 class FieldPluginBase(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel):
-    name = models.CharField(
-        _('Name'),
-        max_length=255,
-        help_text=_('Used to set the field name'),
-        blank=True,
-    )
-    label = models.CharField(_('Label'), max_length=255, blank=True)
-    required = models.BooleanField(_('Field is required'), default=False)
-    required_message = models.TextField(
-        verbose_name=_('Field required error message'),
-        blank=True,
-        null=True,
-        help_text=_('Error message displayed if the required field is left '
-                    'empty. Default: "This field is required".')
-    )
-    placeholder_text = models.CharField(
-        verbose_name=_('Placeholder text'),
-        max_length=255,
-        blank=True,
-        help_text=_('Default text in a form. Disappears when user starts '
-                    'typing. Example: "email@example.com"')
-    )
-    help_text = models.TextField(
-        verbose_name=_('Help text'),
-        blank=True,
-        null=True,
-        help_text=_('Explanatory text displayed next to input field. Just like '
-                    'this one.')
-    )
-    attributes = AttributesField(
-        verbose_name=_('Attributes'),
-        blank=True,
-        excluded_keys=['name']
-    )
-
-    # for text field those are min and max length
-    # for multiple select those are min and max number of choices
-    min_value = models.PositiveIntegerField(
-        _('Min value'),
-        blank=True,
-        null=True,
-    )
-
-    max_value = models.PositiveIntegerField(
-        _('Max value'),
-        blank=True,
-        null=True,
-    )
-    initial_value = models.CharField(
-        verbose_name=_('Initial value'),
-        max_length=255,
-        blank=True,
-        help_text=_('Default value of field.')
-    )
-
-    custom_classes = models.CharField(
-        verbose_name=_('custom css classes'), max_length=255, blank=True)
-
     IS_FILE_FIELD = False
 
     class Meta:
@@ -523,25 +465,21 @@ class FieldPlugin(FieldPluginBase):
 class TextAreaFieldPlugin(FieldPluginBase):
     translations = TranslatedFields(
         **TRANSLATED_FIELDS_KWARGS,
-        text_area_columns_new=models.PositiveIntegerField(verbose_name=_('columns'), blank=True, null=True),
-        text_area_rows_new=models.PositiveIntegerField(verbose_name=_('rows'), blank=True, null=True)
+        text_area_columns=models.PositiveIntegerField(verbose_name=_('columns'), blank=True, null=True),
+        text_area_rows=models.PositiveIntegerField(verbose_name=_('rows'), blank=True, null=True)
     )
-    text_area_columns = models.PositiveIntegerField(
-        verbose_name=_('columns'), blank=True, null=True)
-    text_area_rows = models.PositiveIntegerField(
-        verbose_name=_('rows'), blank=True, null=True)
 
 
 class EmailFieldPlugin(FieldPluginBase):
     translations = TranslatedFields(
         **TRANSLATED_FIELDS_KWARGS,
-        email_send_notification_new=models.BooleanField(
+        email_send_notification=models.BooleanField(
             verbose_name=_('send notification when form is submitted'),
             default=False,
             help_text=_('When checked, the value of this field will be used to '
                         'send an email notification.')
         ),
-        email_subject_new=models.CharField(
+        email_subject=models.CharField(
             verbose_name=_('email subject'),
             max_length=255,
             blank=True,
@@ -549,7 +487,7 @@ class EmailFieldPlugin(FieldPluginBase):
             help_text=_('Used as the email subject when email_send_notification '
                         'is checked.')
         ),
-        email_body_new=models.TextField(
+        email_body=models.TextField(
             verbose_name=_('Additional email body'),
             blank=True,
             default='',
@@ -557,43 +495,22 @@ class EmailFieldPlugin(FieldPluginBase):
                         'are active.')
         ),
     )
-    email_send_notification = models.BooleanField(
-        verbose_name=_('send notification when form is submitted'),
-        default=False,
-        help_text=_('When checked, the value of this field will be used to '
-                    'send an email notification.')
-    )
-    email_subject = models.CharField(
-        verbose_name=_('email subject'),
-        max_length=255,
-        blank=True,
-        default='',
-        help_text=_('Used as the email subject when email_send_notification '
-                    'is checked.')
-    )
-    email_body = models.TextField(
-        verbose_name=_('Additional email body'),
-        blank=True,
-        default='',
-        help_text=_('Additional body text used when email notifications '
-                    'are active.')
-    )
 
 
 TRANSLATED_FILE_FIELDS_KWARGS = {
-    'upload_to_new': FilerFolderField(
+    'upload_to': FilerFolderField(
         verbose_name=_('Upload files to'),
         help_text=_('Select a folder to which all files submitted through '
                     'this field will be uploaded to.'),
         on_delete=models.CASCADE,
     ),
-    'max_size_new': FileSizeField(
+    'max_size': FileSizeField(
         verbose_name=_('Maximum file size'),
         null=True, blank=True,
         help_text=_('The maximum file size of the upload, in bytes. You can '
                     'use common size suffixes (kB, MB, GB, ...).')
     ),
-    'allowed_extensions_new': models.CharField(
+    'allowed_extensions': models.CharField(
         max_length=255,
         verbose_name=_("Allowed extensions"),
         blank=True,
@@ -605,14 +522,14 @@ TRANSLATED_FILE_FIELDS_KWARGS = {
             )
         ),
     ),
-    'invalid_extension_message_new': models.TextField(
+    'invalid_extension_message': models.TextField(
         verbose_name=_('Invalid extension error message'),
         blank=True,
         null=True,
         help_text=_('Error message displayed if extensions are constrained and the uploaded file fails that validation.'
                     'Default: "File extension [extension] is not allowed for this field."')
     ),
-    'store_to_filer_new': models.BooleanField(
+    'store_to_filer': models.BooleanField(
         verbose_name=_("Store this file to filer"),
         default=True,
         help_text=(
@@ -627,49 +544,6 @@ TRANSLATED_FILE_FIELDS_KWARGS = {
 
 
 class FileFieldPluginBase(FieldPluginBase):
-    upload_to = FilerFolderField(
-        verbose_name=_('Upload files to'),
-        help_text=_('Select a folder to which all files submitted through '
-                    'this field will be uploaded to.'),
-        on_delete=models.CASCADE,
-    )
-    max_size = FileSizeField(
-        verbose_name=_('Maximum file size'),
-        null=True, blank=True,
-        help_text=_('The maximum file size of the upload, in bytes. You can '
-                    'use common size suffixes (kB, MB, GB, ...).')
-    )
-    allowed_extensions = models.CharField(
-        max_length=255,
-        verbose_name=_("Allowed extensions"),
-        blank=True,
-        default="",
-        help_text=(
-            _(
-                "Comma-separated list of file extensions allowed for this file field. "
-                "Leave it empty to allow any extension."
-            )
-        ),
-    )
-    invalid_extension_message = models.TextField(
-        verbose_name=_('Invalid extension error message'),
-        blank=True,
-        null=True,
-        help_text=_('Error message displayed if extensions are constrained and the uploaded file fails that validation.'
-                    'Default: "File extension [extension] is not allowed for this field."')
-    )
-    store_to_filer = models.BooleanField(
-        verbose_name=_("Store this file to filer"),
-        default=True,
-        help_text=(
-            _(
-                "Whether to store this file to filer. If this is unchecked and this file is not attached to any email "
-                "notification, the file will be lost forever and using it as a template variable in any email template "
-                "will return empty result."
-            )
-        ),
-    )
-
     IS_FILE_FIELD = True
 
     class Meta:
@@ -687,26 +561,16 @@ class ImageUploadFieldPlugin(FileFieldPluginBase):
     translations = TranslatedFields(
         **TRANSLATED_FIELDS_KWARGS,
         **TRANSLATED_FILE_FIELDS_KWARGS,
-        max_width_new=models.PositiveIntegerField(
+        max_width=models.PositiveIntegerField(
             verbose_name=_('Maximum image width'),
             null=True, blank=True,
             help_text=_('The maximum width of the uploaded image, in pixels.')
         ),
-        max_height_new=models.PositiveIntegerField(
+        max_height=models.PositiveIntegerField(
             verbose_name=_('Maximum image height'),
             null=True, blank=True,
             help_text=_('The maximum height of the uploaded image, in pixels.')
         ),
-    )
-    max_width = models.PositiveIntegerField(
-        verbose_name=_('Maximum image width'),
-        null=True, blank=True,
-        help_text=_('The maximum width of the uploaded image, in pixels.')
-    )
-    max_height = models.PositiveIntegerField(
-        verbose_name=_('Maximum image height'),
-        null=True, blank=True,
-        help_text=_('The maximum height of the uploaded image, in pixels.')
     )
 
 
@@ -737,9 +601,8 @@ class Option(models.Model):
 
 class FormButtonPlugin(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel):
     translations = TranslatedFields(
-        label_new=models.CharField(_('Label'), max_length=255),
+        label=models.CharField(_('Label'), max_length=255),
     )
-    label = models.CharField(_('Label'), max_length=255)
     custom_classes = models.CharField(
         verbose_name=_('custom css classes'), max_length=255, blank=True)
 

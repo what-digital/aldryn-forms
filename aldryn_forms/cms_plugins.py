@@ -375,8 +375,9 @@ class Field(FormElement, TranslatablePlugin):
 
         if form and hasattr(form, 'form_plugin'):
             form_plugin = form.form_plugin
-            field_name = form_plugin.get_form_field_name(field=instance)
-            context['field'] = form[field_name]
+            if instance.has_translation():
+                field_name = form_plugin.get_form_field_name(field=instance)
+                context['field'] = form[field_name]
         return context
 
     def get_render_template(self, context, instance, placeholder):
