@@ -16,25 +16,18 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from djangocms_attributes_field.fields import AttributesField
 from filer.fields.folder import FilerFolderField
+from parler.models import TranslatedFields
 
 from .compat import build_plugin_tree
 from .helpers import is_form_element
 from .sizefield.models import FileSizeField
+from .translatable_utils import TranslatablePluginModel
 from .utils import ALDRYN_FORMS_ACTION_BACKEND_KEY_MAX_SIZE
 from .utils import action_backend_choices
 
 
 AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
-
-# Once djangoCMS < 3.3.1 support is dropped
-# Remove the explicit cmsplugin_ptr field declarations
-CMSPluginField = partial(
-    models.OneToOneField,
-    to=CMSPlugin,
-    related_name='%(app_label)s_%(class)s',
-    parent_link=True,
-)
 
 FieldData = namedtuple(
     'FieldData',
@@ -90,7 +83,23 @@ class SerializedFormField(BaseSerializedFormField):
         return self.name.rpartition('_')[0]
 
 
-class BaseFormPlugin(CMSPlugin):
+# Once djangoCMS < 3.3.1 support is dropped
+# Remove the explicit cmsplugin_ptr field declarations
+CMSPluginField = partial(
+    models.OneToOneField,
+    to=CMSPlugin,
+    related_name='%(app_label)s_%(class)s',
+    parent_link=True,
+)
+
+
+class CMSPluginOverridenPTR:
+    cmsplugin_ptr = CMSPluginField(
+        on_delete=models.CASCADE,
+    )
+
+
+class BaseFormPlugin(CMSPlugin, CMSPluginOverridenPTR):
     FALLBACK_FORM_TEMPLATE = 'aldryn_forms/form.html'
     DEFAULT_FORM_TEMPLATE = getattr(
         settings, 'ALDRYN_FORMS_DEFAULT_TEMPLATE', FALLBACK_FORM_TEMPLATE)
@@ -183,10 +192,6 @@ class BaseFormPlugin(CMSPlugin):
         )
     )
 
-    cmsplugin_ptr = CMSPluginField(
-        on_delete=models.CASCADE,
-    )
-
     class Meta:
         abstract = True
 
@@ -252,7 +257,7 @@ class BaseFormPlugin(CMSPlugin):
         form_elements = self.get_form_elements()
         field_plugins = [
             plugin for plugin in form_elements
-            if issubclass(plugin.get_plugin_class(), Field)
+            if issubclass(plugin.get_plugin_class(), Field) and plugin.has_translation()
         ]
 
         for field_plugin in field_plugins:
@@ -347,20 +352,75 @@ class FormPlugin(BaseFormPlugin):
         return self.name
 
 
-class FieldsetPlugin(CMSPlugin):
+class FieldsetPlugin(CMSPlugin, CMSPluginOverridenPTR):
 
     legend = models.CharField(_('Legend'), max_length=255, blank=True)
     custom_classes = models.CharField(
         verbose_name=_('custom css classes'), max_length=255, blank=True)
-    cmsplugin_ptr = CMSPluginField(
-        on_delete=models.CASCADE,
-    )
 
     def __str__(self):
         return self.legend or str(self.pk)
 
 
-class FieldPluginBase(CMSPlugin):
+TRANSLATED_FIELDS_KWARGS = {
+    'name_new': models.CharField(
+        _('Name'),
+        max_length=255,
+        help_text=_('Used to set the field name'),
+        blank=True,
+    ),
+    'label_new': models.CharField(_('Label'), max_length=255, blank=True),
+    'required_new': models.BooleanField(_('Field is required'), default=False),
+    'required_message_new': models.TextField(
+        verbose_name=_('Field required error message'),
+        blank=True,
+        null=True,
+        help_text=_('Error message displayed if the required field is left '
+                    'empty. Default: "This field is required".')
+    ),
+    'placeholder_text_new': models.CharField(
+        verbose_name=_('Placeholder text'),
+        max_length=255,
+        blank=True,
+        help_text=_('Default text in a form. Disappears when user starts '
+                    'typing. Example: "email@example.com"')
+    ),
+    'help_text_new': models.TextField(
+        verbose_name=_('Help text'),
+        blank=True,
+        null=True,
+        help_text=_('Explanatory text displayed next to input field. Just like '
+                    'this one.')
+    ),
+    'attributes_new': AttributesField(
+        verbose_name=_('Attributes'),
+        blank=True,
+        excluded_keys=['name']
+    ),
+
+    # for text field those are min and max length
+    # for multiple select those are min and max number of choices
+    'min_value_new': models.PositiveIntegerField(
+        _('Min value'),
+        blank=True,
+        null=True,
+    ),
+    'max_value_new': models.PositiveIntegerField(
+        _('Max value'),
+        blank=True,
+        null=True,
+    ),
+    'initial_value_new': models.CharField(
+        verbose_name=_('Initial value'),
+        max_length=255,
+        blank=True,
+        help_text=_('Default value of field.')
+    ),
+    'custom_classes_new': models.CharField(verbose_name=_('custom css classes'), max_length=255, blank=True),
+}
+
+
+class FieldPluginBase(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel):
     name = models.CharField(
         _('Name'),
         max_length=255,
@@ -418,9 +478,6 @@ class FieldPluginBase(CMSPlugin):
 
     custom_classes = models.CharField(
         verbose_name=_('custom css classes'), max_length=255, blank=True)
-    cmsplugin_ptr = CMSPluginField(
-        on_delete=models.CASCADE,
-    )
 
     IS_FILE_FIELD = False
 
@@ -434,14 +491,18 @@ class FieldPluginBase(CMSPlugin):
             setattr(self, attribute, True)
 
     def __str__(self):
-        return self.label or self.name or str(self.pk)
+        if self.has_translation() and (self.label or self.name):
+            return self.label or self.name
+        else:
+            return str(self.pk)
 
     @property
     def field_type(self):
         return self.plugin_type.lower()
 
     def get_label(self):
-        return self.label or self.placeholder_text
+        if self.has_translation():
+            return self.label or self.placeholder_text
 
     def clean(self):
         if ' ' in self.name:
@@ -449,14 +510,22 @@ class FieldPluginBase(CMSPlugin):
 
 
 class FieldPlugin(FieldPluginBase):
+    translations = TranslatedFields(**TRANSLATED_FIELDS_KWARGS)
+
     def copy_relations(self, oldinstance):
         for option in oldinstance.option_set.all():
             option.pk = None  # copy on save
             option.field = self
             option.save()
+        TranslatablePluginModel.copy_relations(self, oldinstance)
 
 
 class TextAreaFieldPlugin(FieldPluginBase):
+    translations = TranslatedFields(
+        **TRANSLATED_FIELDS_KWARGS,
+        text_area_columns_new=models.PositiveIntegerField(verbose_name=_('columns'), blank=True, null=True),
+        text_area_rows_new=models.PositiveIntegerField(verbose_name=_('rows'), blank=True, null=True)
+    )
     text_area_columns = models.PositiveIntegerField(
         verbose_name=_('columns'), blank=True, null=True)
     text_area_rows = models.PositiveIntegerField(
@@ -464,6 +533,30 @@ class TextAreaFieldPlugin(FieldPluginBase):
 
 
 class EmailFieldPlugin(FieldPluginBase):
+    translations = TranslatedFields(
+        **TRANSLATED_FIELDS_KWARGS,
+        email_send_notification_new=models.BooleanField(
+            verbose_name=_('send notification when form is submitted'),
+            default=False,
+            help_text=_('When checked, the value of this field will be used to '
+                        'send an email notification.')
+        ),
+        email_subject_new=models.CharField(
+            verbose_name=_('email subject'),
+            max_length=255,
+            blank=True,
+            default='',
+            help_text=_('Used as the email subject when email_send_notification '
+                        'is checked.')
+        ),
+        email_body_new=models.TextField(
+            verbose_name=_('Additional email body'),
+            blank=True,
+            default='',
+            help_text=_('Additional body text used when email notifications '
+                        'are active.')
+        ),
+    )
     email_send_notification = models.BooleanField(
         verbose_name=_('send notification when form is submitted'),
         default=False,
@@ -485,6 +578,52 @@ class EmailFieldPlugin(FieldPluginBase):
         help_text=_('Additional body text used when email notifications '
                     'are active.')
     )
+
+
+TRANSLATED_FILE_FIELDS_KWARGS = {
+    'upload_to_new': FilerFolderField(
+        verbose_name=_('Upload files to'),
+        help_text=_('Select a folder to which all files submitted through '
+                    'this field will be uploaded to.'),
+        on_delete=models.CASCADE,
+    ),
+    'max_size_new': FileSizeField(
+        verbose_name=_('Maximum file size'),
+        null=True, blank=True,
+        help_text=_('The maximum file size of the upload, in bytes. You can '
+                    'use common size suffixes (kB, MB, GB, ...).')
+    ),
+    'allowed_extensions_new': models.CharField(
+        max_length=255,
+        verbose_name=_("Allowed extensions"),
+        blank=True,
+        default="",
+        help_text=(
+            _(
+                "Comma-separated list of file extensions allowed for this file field. "
+                "Leave it empty to allow any extension."
+            )
+        ),
+    ),
+    'invalid_extension_message_new': models.TextField(
+        verbose_name=_('Invalid extension error message'),
+        blank=True,
+        null=True,
+        help_text=_('Error message displayed if extensions are constrained and the uploaded file fails that validation.'
+                    'Default: "File extension [extension] is not allowed for this field."')
+    ),
+    'store_to_filer_new': models.BooleanField(
+        verbose_name=_("Store this file to filer"),
+        default=True,
+        help_text=(
+            _(
+                "Whether to store this file to filer. If this is unchecked and this file is not attached to any email "
+                "notification, the file will be lost forever and using it as a template variable in any email template "
+                "will return empty result."
+            )
+        ),
+    ),
+}
 
 
 class FileFieldPluginBase(FieldPluginBase):
@@ -538,10 +677,27 @@ class FileFieldPluginBase(FieldPluginBase):
 
 
 class FileUploadFieldPlugin(FileFieldPluginBase):
-    pass
+    translations = TranslatedFields(
+        **TRANSLATED_FIELDS_KWARGS,
+        **TRANSLATED_FILE_FIELDS_KWARGS,
+    )
 
 
 class ImageUploadFieldPlugin(FileFieldPluginBase):
+    translations = TranslatedFields(
+        **TRANSLATED_FIELDS_KWARGS,
+        **TRANSLATED_FILE_FIELDS_KWARGS,
+        max_width_new=models.PositiveIntegerField(
+            verbose_name=_('Maximum image width'),
+            null=True, blank=True,
+            help_text=_('The maximum width of the uploaded image, in pixels.')
+        ),
+        max_height_new=models.PositiveIntegerField(
+            verbose_name=_('Maximum image height'),
+            null=True, blank=True,
+            help_text=_('The maximum height of the uploaded image, in pixels.')
+        ),
+    )
     max_width = models.PositiveIntegerField(
         verbose_name=_('Maximum image width'),
         null=True, blank=True,
@@ -579,16 +735,16 @@ class Option(models.Model):
         return super(Option, self).save(*args, **kwargs)
 
 
-class FormButtonPlugin(CMSPlugin):
+class FormButtonPlugin(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel):
+    translations = TranslatedFields(
+        label_new=models.CharField(_('Label'), max_length=255),
+    )
     label = models.CharField(_('Label'), max_length=255)
     custom_classes = models.CharField(
         verbose_name=_('custom css classes'), max_length=255, blank=True)
-    cmsplugin_ptr = CMSPluginField(
-        on_delete=models.CASCADE,
-    )
 
     def __str__(self):
-        return self.label
+        return self.label if self.has_translation() and self.label else str(self.pk)
 
 
 class FormSubmission(models.Model):

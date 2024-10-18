@@ -39,6 +39,7 @@ from .models import SerializedFormField
 from .signals import form_post_save
 from .signals import form_pre_save
 from .sizefield.utils import filesizeformat
+from .translatable_utils import TranslatablePlugin
 from .utils import get_action_backends
 from .validators import (
     MaxChoicesValidator,
@@ -256,7 +257,7 @@ class Fieldset(FieldContainer):
         return template_names
 
 
-class Field(FormElement):
+class Field(FormElement, TranslatablePlugin):
     module = _('Form fields')
     # template name is calculated based on field
     render_template = True

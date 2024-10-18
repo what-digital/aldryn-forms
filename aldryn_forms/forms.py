@@ -4,10 +4,14 @@ from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorDict
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from parler.forms import TranslatableModelForm
 
 from PIL import Image
 
-from .models import FormPlugin, FormSubmission
+from .models import (
+    FormPlugin, FormSubmission, FieldPlugin, EmailFieldPlugin, FileUploadFieldPlugin, ImageUploadFieldPlugin,
+    TextAreaFieldPlugin
+)
 from .sizefield.utils import filesizeformat
 from .utils import add_form_error, get_user_model, serialize_delimiter_separated_values_string
 import mimetypes
@@ -199,7 +203,7 @@ class FormPluginForm(ExtandableErrorForm):
         return self.cleaned_data
 
 
-class BooleanFieldForm(forms.ModelForm):
+class BooleanFieldForm(TranslatableModelForm):
 
     def __init__(self, *args, **kwargs):
         if 'instance' not in kwargs:  # creating new one
@@ -209,24 +213,28 @@ class BooleanFieldForm(forms.ModelForm):
         super(BooleanFieldForm, self).__init__(*args, **kwargs)
 
     class Meta:
+        model = FieldPlugin
         fields = ['label', 'help_text', 'required', 'required_message', 'custom_classes']
 
 
-class SelectFieldForm(forms.ModelForm):
+class SelectFieldForm(TranslatableModelForm):
 
     class Meta:
+        model = FieldPlugin
         fields = ['label', 'help_text', 'required', 'required_message', 'custom_classes']
 
 
-class RadioFieldForm(forms.ModelForm):
+class RadioFieldForm(TranslatableModelForm):
 
     class Meta:
+        model = FieldPlugin
         fields = ['label', 'help_text', 'required', 'required_message', 'custom_classes']
 
 
-class CaptchaFieldForm(forms.ModelForm):
+class CaptchaFieldForm(TranslatableModelForm):
 
     class Meta:
+        model = FieldPlugin
         # captcha is always required
         fields = ['label', 'help_text', 'required_message']
 
@@ -241,7 +249,7 @@ class MinMaxValueForm(ExtandableErrorForm):
         return self.cleaned_data
 
 
-class TextFieldForm(MinMaxValueForm):
+class TextFieldForm(MinMaxValueForm, TranslatableModelForm):
 
     def __init__(self, *args, **kwargs):
         super(TextFieldForm, self).__init__(*args, **kwargs)
@@ -254,12 +262,14 @@ class TextFieldForm(MinMaxValueForm):
         self.fields['max_value'].required = False
 
     class Meta:
+        model = FieldPlugin
         fields = ['label', 'placeholder_text', 'help_text',
                   'min_value', 'max_value', 'required', 'required_message', 'custom_classes']
 
 
-class HiddenFieldForm(ExtandableErrorForm):
+class HiddenFieldForm(ExtandableErrorForm, TranslatableModelForm):
     class Meta:
+        model = FieldPlugin
         fields = ['name', 'initial_value']
 
 
@@ -271,6 +281,7 @@ class EmailFieldForm(TextFieldForm):
         self.fields['max_value'].required = False
 
     class Meta:
+        model = EmailFieldPlugin
         fields = [
             'label',
             'placeholder_text',
@@ -286,7 +297,7 @@ class EmailFieldForm(TextFieldForm):
         ]
 
 
-class FileFieldForm(forms.ModelForm):
+class FileFieldForm(TranslatableModelForm):
     def __init__(self, *args, **kwargs):
         super(FileFieldForm, self).__init__(*args, **kwargs)
         self.fields['help_text'].help_text = _(
@@ -295,11 +306,12 @@ class FileFieldForm(forms.ModelForm):
             'configured below.')
 
     class Meta:
+        model = FileUploadFieldPlugin
         fields = ['label', 'help_text', 'required', 'required_message',
                   'custom_classes', 'upload_to', 'max_size']
 
 
-class ImageFieldForm(forms.ModelForm):
+class ImageFieldForm(TranslatableModelForm):
     def __init__(self, *args, **kwargs):
         super(ImageFieldForm, self).__init__(*args, **kwargs)
         self.fields['help_text'].help_text = _(
@@ -308,6 +320,7 @@ class ImageFieldForm(forms.ModelForm):
             'for the maximum file size and dimensions configured below.')
 
     class Meta:
+        model = ImageUploadFieldPlugin
         fields = FileFieldForm.Meta.fields + ['max_height', 'max_width']
 
 
@@ -318,11 +331,12 @@ class TextAreaFieldForm(TextFieldForm):
         self.fields['max_value'].required = False
 
     class Meta:
+        model = TextAreaFieldPlugin
         fields = ['label', 'placeholder_text', 'help_text', 'text_area_columns',
                   'text_area_rows', 'min_value', 'max_value', 'required', 'required_message', 'custom_classes']
 
 
-class MultipleSelectFieldForm(MinMaxValueForm):
+class MultipleSelectFieldForm(MinMaxValueForm, TranslatableModelForm):
 
     def __init__(self, *args, **kwargs):
         super(MultipleSelectFieldForm, self).__init__(*args, **kwargs)
@@ -334,5 +348,6 @@ class MultipleSelectFieldForm(MinMaxValueForm):
         self.fields['max_value'].help_text = _('Maximum amount of elements to chose.')
 
     class Meta:
+        model = FieldPlugin
         # 'required' and 'required_message' depend on min_value field validator
         fields = ['label', 'help_text', 'min_value', 'max_value', 'custom_classes']
