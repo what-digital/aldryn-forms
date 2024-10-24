@@ -892,7 +892,7 @@ else:
     plugin_pool.register_plugin(CaptchaField)
 
 
-class SubmitButton(FormElement):
+class SubmitButton(FormElement, TranslatablePlugin):
     render_template = 'aldryn_forms/submit_button.html'
     name = _('Submit Button')
     model = models.FormButtonPlugin
