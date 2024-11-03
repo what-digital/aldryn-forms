@@ -450,6 +450,9 @@ class FieldPluginBase(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel)
         if ' ' in self.name:
             raise ValidationError(_('The "name" field cannot contain spaces.'))
 
+    def copy_relations(self, old_instance):
+        TranslatablePluginModel.copy_relations(self, old_instance)
+
 
 class FieldPlugin(FieldPluginBase):
     translations = TranslatedFields(**TRANSLATED_FIELDS_KWARGS)
@@ -608,6 +611,9 @@ class FormButtonPlugin(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel
 
     def __str__(self):
         return self.label if self.has_translation() and self.label else str(self.pk)
+
+    def copy_relations(self, old_instance):
+        TranslatablePluginModel.copy_relations(self, old_instance)
 
 
 class FormSubmission(models.Model):
