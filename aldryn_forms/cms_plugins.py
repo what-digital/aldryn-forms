@@ -49,13 +49,13 @@ from .validators import (
 )
 
 
-class FormElement(CMSPluginBase):
+class FormElement():
     # Don't cache anything.
     cache = False
     module = _('Forms')
 
 
-class FieldContainer(FormElement):
+class FieldContainer(FormElement, CMSPluginBase):
     allow_children = True
 
 
