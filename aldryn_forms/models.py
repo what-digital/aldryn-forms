@@ -257,7 +257,7 @@ class BaseFormPlugin(CMSPlugin, CMSPluginOverridenPTR):
         form_elements = self.get_form_elements()
         field_plugins = [
             plugin for plugin in form_elements
-            if issubclass(plugin.get_plugin_class(), Field) and plugin.has_translation()
+            if issubclass(plugin.get_plugin_class(), Field) and plugin.has_translation_or_fallback()
         ]
 
         for field_plugin in field_plugins:
@@ -433,7 +433,7 @@ class FieldPluginBase(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel)
             setattr(self, attribute, True)
 
     def __str__(self):
-        if self.has_translation() and (self.label or self.name):
+        if self.has_translation_or_fallback() and (self.label or self.name):
             return self.label or self.name
         else:
             return str(self.pk)
@@ -443,7 +443,7 @@ class FieldPluginBase(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel)
         return self.plugin_type.lower()
 
     def get_label(self):
-        if self.has_translation():
+        if self.has_translation_or_fallback():
             return self.label or self.placeholder_text
 
     def clean(self):
@@ -610,7 +610,7 @@ class FormButtonPlugin(CMSPlugin, CMSPluginOverridenPTR, TranslatablePluginModel
         verbose_name=_('custom css classes'), max_length=255, blank=True)
 
     def __str__(self):
-        return self.label if self.has_translation() and self.label else str(self.pk)
+        return self.label if self.has_translation_or_fallback() and self.label else str(self.pk)
 
     def copy_relations(self, old_instance):
         TranslatablePluginModel.copy_relations(self, old_instance)
